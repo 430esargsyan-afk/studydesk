@@ -90,6 +90,39 @@ main > section[aria-labelledby="reviewTitle"] { display:none !important; }
 #saveFrame, #prepareImagePrompt, #copyImagePrompt { display:none !important; }
 .topbar .pill { font-size:10px; }
 
+
+/* Focused three-control interface */
+.topbar { justify-content:center; padding:12px 18px; }
+.topbar .pill, .hero, main > section[aria-labelledby="screenTutorTitle"],
+main > section[aria-labelledby="questionImageTitle"], main > section.grid,
+main > section[aria-labelledby="reviewTitle"], footer,
+#saveFrame, #stopShare, #loadLocalAI, #checkLocalAI, #modelProgress,
+#backendStatus, #questionImageFile, #questionImagePreview, #questionNotes,
+#questionImageStatus, #ocrText, #imageTutorPrompt, #prepareImagePrompt,
+#copyImagePrompt, #removeQuestionImage, #analyzeImage, #openTutorTab,
+#updateTutorTab, #tutorTabStatus, #tutorQuestion, #separateTutorTitle,
+#tutorQuestion + label { display:none !important; }
+main { max-width:900px; padding:18px; }
+main > section[aria-labelledby="shareTabTitle"] { margin:0 auto 16px !important; }
+#shareTabTitle { font-size:20px; margin-bottom:10px; }
+#shareTabTitle + p { display:none; }
+.captureActions { margin-top:10px; }
+#startShare { display:inline-block !important; }
+#analyzeSharedFrame { display:inline-block !important; }
+#stopShare { display:none !important; }
+.captureFrame { max-height:48vh; min-height:220px; object-fit:contain; }
+#captureStatus { margin-top:8px; }
+main > section[aria-labelledby="separateTutorTitle"] {
+ display:block !important; margin:0 auto !important; max-width:900px;
+}
+#separateTutorTitle, #separateTutorTitle + p, .tutorGrid > div:first-child,
+main > section[aria-labelledby="separateTutorTitle"] .field,
+#tutorTabStatus, main > section[aria-labelledby="separateTutorTitle"] .small { display:none !important; }
+.tutorGrid { display:block; }
+.tutorGrid > div:last-child { display:block; }
+#tutorAnswer { display:block !important; width:100%; min-height:220px; font-size:18px; line-height:1.5; font-weight:500; resize:vertical; }
+@media(max-width:600px){ main {padding:10px;} .panel {padding:16px;} }
+
 </style>
 </head>
 <body>
@@ -118,7 +151,7 @@ main > section[aria-labelledby="reviewTitle"] { display:none !important; }
 
 <section class="panel" style="margin:0 0 24px" aria-labelledby="screenTutorTitle">
 <h2 id="screenTutorTitle">No extension required</h2>
-<p>Open StudyDesk in one tab and your schoolwork in another. To share a question, use the Share a tab button below and choose the schoolwork tab in Chrome's own prompt. If screen sharing is unavailable, take a screenshot using Chrome's normal screenshot feature and upload it yourself. StudyDesk does not watch other tabs in the background.</p>
+<p>Open StudyDesk in one tab and your schoolwork in another. To share a question, use the Share screen button below and choose the schoolwork tab in Chrome's own prompt. If screen sharing is unavailable, take a screenshot using Chrome's normal screenshot feature and upload it yourself. StudyDesk does not watch other tabs in the background.</p>
 <div class="tool" style="margin-top:16px">
 <div class="eyebrow">Simple workflow</div>
 <p style="margin-top:8px;color:inherit">1. Open StudyDesk as a normal website. 2. Share a tab with Chrome's permission prompt or upload a screenshot. 3. Load the free local AI model once. 4. Click Analyze question. 5. Review the explanation in the separate answer tab.</p>
@@ -130,7 +163,7 @@ main > section[aria-labelledby="reviewTitle"] { display:none !important; }
 <div class="captureActions">
 <button id="startShare">Share a tab</button>
 <button class="secondary" id="saveFrame" disabled>Save question image</button>
-<button id="analyzeSharedFrame" disabled>Analyze current frame</button>
+<button id="analyzeSharedFrame" disabled>Analyze</button>
 <button class="ghost" id="stopShare" disabled>Stop sharing</button>
 </div>
 <video id="screenCaptureVideo" class="captureFrame" autoplay muted playsinline aria-label="User-selected shared tab preview"></video>
@@ -285,7 +318,6 @@ main > section[aria-labelledby="reviewTitle"] { display:none !important; }
     try {
       const webllm = await import('https://esm.run/@mlc-ai/web-llm');
       const candidates = [
-        'SmolLM2-1.7B-Instruct-q4f16_1-MLC',
         'SmolLM2-360M-Instruct-q4f32_1-MLC'
       ];
       let lastError = null;
@@ -365,7 +397,7 @@ main > section[aria-labelledby="reviewTitle"] { display:none !important; }
           }
         ],
         temperature: 0.25,
-        max_tokens: 650
+        max_tokens: 220
       });
       const answer = completion.choices?.[0]?.message?.content?.trim();
       if (!answer) throw new Error('The local model returned an empty response.');
@@ -898,6 +930,16 @@ main > section[aria-labelledby="reviewTitle"] { display:none !important; }
   window.addEventListener('pagehide', () => stopScreenShare(false));
   readSaved();
   renderHistory();
+  // Warm the smaller local model and OCR worker in the background after the page opens.
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      loadLocalAI().then(ready => {
+        if (ready) ensureLocalOcr().catch(error => {
+          $('captureStatus').textContent = 'AI ready; OCR setup failed: ' + (error.message || 'try reloading');
+        });
+      });
+    }, 300);
+  }, { once: true });
 })();
 </script>
 </body>
