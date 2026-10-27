@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StudyDesk AI</title>
+<style>
+:root {
+  --site-primary: #3457d5;
+  --site-secondary: #e8edff;
+  --site-background: #f5f7fc;
+  --site-on-primary: #ffffff;
+  --site-on-secondary: #23356f;
+  --site-on-background: #172033;
+  --site-font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --site-font-heading: Inter, ui-sans-serif, system-ui, sans-serif;
+  --site-heading-scale: 1;
+  --site-spacing-scale: 1;
+  --site-radius-scale: 1;
+  --site-decoration-opacity: 1;
+  color-scheme: light dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--site-font-body); background: var(--site-background); color: var(--site-on-background); }
+#app { min-height: 100vh; width: 100%; border-radius: 0; background-color: light-dark(#f5f7fc, #111827); color: light-dark(#172033, #eef2ff); }
+.topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px clamp(18px,4vw,54px); border-bottom:1px solid light-dark(#e3e8f2,#293449); background:light-dark(#fff,#182235); }
+.brand { display:flex; align-items:center; gap:11px; font-weight:800; letter-spacing:-.4px; }
+.logo { width:38px;height:38px;border-radius:13px;background:var(--site-primary);color:white;display:grid;place-items:center;font-weight:900; }
+.pill { font-size:12px; padding:7px 10px; border-radius:99px; background:light-dark(#edf1ff,#27365b); color:light-dark(#2945a8,#dce4ff); font-weight:700; }
+main { max-width:1120px; margin:0 auto; padding:34px 22px 56px; }
+.hero { display:grid; grid-template-columns:1.15fr .85fr; gap:24px; align-items:stretch; margin-bottom:24px; }
+.panel { background:light-dark(#fff,#1a2639); border:1px solid light-dark(#e4e9f2,#2c3a50); border-radius:calc(22px * var(--site-radius-scale)); padding:clamp(20px,3vw,30px); box-shadow:0 10px 30px rgba(20,35,70,.05); }
+h1 { font-family:var(--site-font-heading); font-size:calc(38px * var(--site-heading-scale)); line-height:1.08; letter-spacing:-1.5px; margin:12px 0; }
+h2 { font-size:calc(20px * var(--site-heading-scale)); margin:0 0 14px; letter-spacing:-.4px; }
+p { line-height:1.55; color:light-dark(#63708a,#aab6cb); margin:0; }
+.eyebrow { color:var(--site-primary); text-transform:uppercase; letter-spacing:1.4px; font-size:11px; font-weight:800; }
+.field { display:flex; gap:9px; margin-top:22px; }
+input, textarea { width:100%; font:inherit; border:1px solid light-dark(#d9e0ed,#3a4a63); background:light-dark(#fbfcff,#111c2e); color:light-dark(#172033,#f2f5ff); border-radius:12px; padding:13px 14px; outline:none; }
+input:focus,textarea:focus { border-color:var(--site-primary); box-shadow:0 0 0 3px rgba(52,87,213,.14); }
+button { border:0; border-radius:12px; padding:12px 16px; font:inherit; font-weight:750; cursor:pointer; background:var(--site-primary); color:white; white-space:nowrap; }
+button.secondary { background:light-dark(#edf1ff,#2a3855); color:light-dark(#2945a8,#e1e8ff); }
+button.ghost { background:transparent; color:inherit; border:1px solid light-dark(#d9e0ed,#3a4a63); }
+.small { font-size:12px; margin-top:10px; }
+.steps { display:grid; gap:14px; }
+.step { display:flex; gap:12px; align-items:flex-start; }
+.stepnum { flex:0 0 29px; height:29px; display:grid; place-items:center; border-radius:9px; background:var(--site-secondary); color:var(--site-on-secondary); font-weight:850; font-size:13px; }
+.grid { display:grid; grid-template-columns:1.2fr .8fr; gap:24px; }
+.tools { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.tool { border:1px solid light-dark(#e2e8f2,#33435a); border-radius:15px; padding:15px; background:light-dark(#fbfcff,#152136); }
+.tool b { display:block; margin:7px 0 4px; }
+.tool span { font-size:12px; color:light-dark(#68758c,#aab6cb); }
+.icon { font-size:21px; }
+textarea { min-height:150px; resize:vertical; margin-top:12px; }
+.output { margin-top:14px; padding:14px; border-radius:13px; background:light-dark(#f0f3fb,#111c2e); border:1px dashed light-dark(#cbd5e8,#40516b); min-height:64px; white-space:pre-wrap; font-size:14px; line-height:1.55; }
+.status { font-size:12px; color:light-dark(#63708a,#aab6cb); margin-top:12px; }
+footer { text-align:center; padding:25px; font-size:12px; color:light-dark(#7b879b,#94a3b8); }
+.historyList { display:grid; gap:10px; }
+.historyItem { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 14px; border:1px solid light-dark(#e2e8f2,#33435a); border-radius:13px; background:light-dark(#fbfcff,#152136); }
+.historyItem strong { display:block; font-size:13px; }
+.historyItem span { display:block; color:light-dark(#68758c,#aab6cb); font-size:12px; margin-top:4px; }
+.historyActions { display:flex; gap:7px; flex-wrap:wrap; }
+.historyActions button { padding:8px 10px; font-size:12px; }
+.kbd { display:inline-block; border:1px solid light-dark(#d9e0ed,#3a4a63); border-radius:6px; padding:2px 6px; font-size:11px; font-weight:700; }
+.captureFrame { display:block; width:100%; max-height:420px; margin-top:14px; border:1px solid light-dark(#d9e0ed,#3a4a63); border-radius:13px; background:#101827; }
+.captureActions { display:flex; flex-wrap:wrap; gap:9px; margin-top:14px; }
+.captureActions button:disabled { opacity:.45; cursor:not-allowed; }
+.tutorAnswerBox { min-height:230px; font-size:clamp(26px,4vw,40px); font-weight:800; line-height:1.3; }
+.tutorQuestionBox { min-height:90px; }
+.tutorGrid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.questionImagePreview { display:block; max-width:100%; max-height:360px; object-fit:contain; border:1px solid light-dark(#d9e0ed,#3a4a63); border-radius:12px; margin-top:12px; background:light-dark(#f0f3fb,#111c2e); }
+.fileField { display:block; margin-top:12px; }
+.consentRow { display:flex; align-items:flex-start; gap:10px; margin-top:16px; font-size:13px; line-height:1.5; color:light-dark(#4f5d75,#c1cbda); }
+.consentRow input { width:auto; flex:0 0 auto; margin-top:3px; }
+@media(max-width:600px){ .tutorGrid { grid-template-columns:1fr; } }
+@media(max-width:520px){ .historyItem { align-items:flex-start; flex-direction:column; } }
+@media(max-width:760px){.hero,.grid{grid-template-columns:1fr}.field{flex-direction:column}.tools{grid-template-columns:1fr 1fr}}
+@media(max-width:430px){.tools{grid-template-columns:1fr}h1{font-size:32px}}
+
+/* Simple mode: keep only the core share, local AI, and answer workflow. */
+.hero > .panel:nth-child(2),
+.hero .field,
+.hero .small,
+#linkStatus,
+main > section[aria-labelledby="screenTutorTitle"],
+main > section.grid,
+main > section[aria-labelledby="reviewTitle"] { display:none !important; }
+.hero { margin-bottom:18px; }
+.hero > .panel { padding:20px; }
+.hero h1 { margin-bottom:8px; }
+#saveFrame, #prepareImagePrompt, #copyImagePrompt { display:none !important; }
+.topbar .pill { font-size:10px; }
+
+</style>
+</head>
+<body>
+<div id="app">
+<header class="topbar"><div class="brand"><div class="logo">S</div><span>StudyDesk AI</span></div><span class="pill">LOCAL AI · NO API FEES</span></header>
+<main>
+<section class="hero">
+<div class="panel">
+<div class="eyebrow">Your schoolwork sidekick</div>
+<h1>StudyDesk</h1>
+<p>Share a practice-work tab, load the free on-device AI, and get a step-by-step explanation. Nothing is typed into or submitted to your schoolwork.</p>
+<div class="field"><input id="assignmentLink" type="url" placeholder="Paste an assignment link" aria-label="Assignment link"><button id="openLink">Add assignment</button></div>
+<div class="small">Links are stored in this browser only. Private Classroom content is not imported.</div>
+<div id="linkStatus" class="status" aria-live="polite">No assignment link added yet.</div>
+</div>
+<div class="panel">
+<h2>How it works</h2>
+<div class="steps">
+<div class="step"><div class="stepnum">1</div><div><b>Read the whole assignment</b><p>Find every question, direction, source, and requirement.</p></div></div>
+<div class="step"><div class="stepnum">2</div><div><b>Prepare suggested answers</b><p>Draft responses, check them against the directions, and explain the reasoning in clear language.</p></div></div>
+<div class="step"><div class="stepnum">3</div><div><b>Review before applying</b><p>Nothing is inserted automatically. You check and edit the draft, then click to apply it to your document.</p></div></div>
+<div class="step"><div class="stepnum">4</div><div><b>Keep version history</b><p>See earlier drafts and approved updates, compare changes, and go back to an earlier version.</p></div></div>
+</div>
+</div>
+</section>
+
+<section class="panel" style="margin:0 0 24px" aria-labelledby="screenTutorTitle">
+<h2 id="screenTutorTitle">No extension required</h2>
+<p>Open StudyDesk in one tab and your schoolwork in another. To share a question, use the Share a tab button below and choose the schoolwork tab in Chrome's own prompt. If screen sharing is unavailable, take a screenshot using Chrome's normal screenshot feature and upload it yourself. StudyDesk does not watch other tabs in the background.</p>
+<div class="tool" style="margin-top:16px">
+<div class="eyebrow">Simple workflow</div>
+<p style="margin-top:8px;color:inherit">1. Open StudyDesk as a normal website. 2. Share a tab with Chrome's permission prompt or upload a screenshot. 3. Load the free local AI model once. 4. Click Analyze question. 5. Review the explanation in the separate answer tab.</p>
+</div>
+</section>
+<section class="panel" style="margin:0 0 24px" aria-labelledby="shareTabTitle">
+<h2 id="shareTabTitle">Step 1 · Share your schoolwork tab</h2>
+<p>Click Share a tab and choose your schoolwork tab in Chrome's sharing prompt. Once it is sharing, you can analyze the current frame directly—no screenshot download or re-upload is needed. Chrome's sharing indicator stays visible.</p>
+<div class="captureActions">
+<button id="startShare">Share a tab</button>
+<button class="secondary" id="saveFrame" disabled>Save question image</button>
+<button id="analyzeSharedFrame" disabled>Analyze current frame</button>
+<button class="ghost" id="stopShare" disabled>Stop sharing</button>
+</div>
+<video id="screenCaptureVideo" class="captureFrame" autoplay muted playsinline aria-label="User-selected shared tab preview"></video>
+<canvas id="screenCaptureCanvas" hidden></canvas>
+<div id="captureStatus" class="status" role="status" aria-live="polite">Not sharing. Nothing is being captured.</div>
+<p class="small">Only share pages where screen sharing is allowed. Do not use this on LockDown Browser, exams, or pages where assistance is prohibited. If the browser or school network blocks screen sharing, use a manually created screenshot only where permitted. Do not attempt to bypass those restrictions.</p>
+</section>
+<section class="panel" style="margin:0 0 24px" aria-labelledby="questionImageTitle">
+<h2 id="questionImageTitle">Step 2 · Load AI and analyze</h2>
+<p>Choose a screenshot you made yourself, or analyze a frame from the tab you chose to share. OCR and the language model run locally on this Chromebook; the image is not uploaded to an AI server.</p>
+<div class="tool" style="margin-top:14px">
+<div class="eyebrow">Free on-device AI</div>
+<p style="margin-top:8px;color:inherit">StudyDesk uses WebGPU to run a small language model on this Chromebook. No OpenAI, Google, Cloudflare AI, API key, or AI usage bill is involved.</p>
+<div class="captureActions"><button id="loadLocalAI">Load free AI</button><button class="secondary" id="checkLocalAI">Check device support</button></div>
+<progress id="modelProgress" max="100" value="0" style="width:100%;margin-top:12px" aria-label="Local model download progress"></progress>
+<div id="backendStatus" class="status" role="status" aria-live="polite">Local AI is not loaded. Check WebGPU support first.</div>
+<p class="small">The preferred model is about 966 MB. If this Chromebook cannot run it, StudyDesk will try a much smaller model with weaker answers. Model files download once and are cached by the browser.</p>
+</div>
+<label class="fileField" for="questionImageFile">Question screenshot (PNG, JPG, or WebP; up to 5 MB)</label>
+<input id="questionImageFile" type="file" accept="image/png,image/jpeg,image/webp">
+<img id="questionImagePreview" class="questionImagePreview" alt="Preview of the attached question" hidden>
+<label for="questionNotes">What have you tried or what part is confusing?</label>
+<textarea id="questionNotes" placeholder="Optional: add your attempt or the part you want explained..."></textarea>
+<p class="small">Your screenshot is processed on this Chromebook. StudyDesk does not upload it to an AI server. Avoid sharing passwords or private personal information in screenshots.</p>
+<div class="captureActions">
+<button id="prepareImagePrompt">Prepare tutoring prompt</button>
+<button class="secondary" id="copyImagePrompt">Copy tutoring prompt</button>
+<button id="analyzeImage">Analyze question</button>
+<button class="ghost" id="removeQuestionImage">Remove image</button>
+</div>
+<div id="questionImageStatus" class="status" aria-live="polite">No question image attached.</div>
+<div id="analysisStatus" class="status" role="status" aria-live="polite">Choose an image, then click Analyze question. OCR and AI both run on this Chromebook.</div>
+<label for="ocrText">Text recognized from the question (check OCR before relying on it)</label>
+<textarea id="ocrText" placeholder="Recognized question text will appear here. You can correct OCR mistakes before asking the local model..."></textarea>
+<div id="imageTutorPrompt" class="output" aria-live="polite">The local model explains recognized text. It may misread handwriting, equations, diagrams, or small print.</div>
+</section>
+<section class="panel" style="margin:0 0 24px" aria-labelledby="separateTutorTitle">
+<h2 id="separateTutorTitle">Step 3 · Your explanation</h2>
+<p>When the on-device model returns an explanation, it appears here and in the separate tab. You can also paste or edit text manually. Neither tab changes your schoolwork.</p>
+<div class="tutorGrid">
+<div>
+<label for="tutorQuestion">Question</label>
+<textarea id="tutorQuestion" class="tutorQuestionBox" placeholder="Paste a practice question here..."></textarea>
+</div>
+<div>
+<label for="tutorAnswer">Answer and explanation</label>
+<textarea id="tutorAnswer" class="tutorAnswerBox" placeholder="Your tutor's explanation will appear here..."></textarea>
+</div>
+</div>
+<div class="field" style="flex-wrap:wrap">
+<button id="openTutorTab">Open answer in new tab</button>
+<button class="secondary" id="updateTutorTab">Update answer tab</button>
+</div>
+<div id="tutorTabStatus" class="status" aria-live="polite">Separate answer tab is not open.</div>
+<p class="small">This tab is a display only. It receives the question, image, and explanation that you choose to send from the main StudyDesk tab. It does not independently read other tabs or start screen sharing.</p>
+</section>
+<section class="grid">
+<div class="panel">
+<h2>Assignment workspace</h2>
+<p>Paste your assignment directions here to organize a tutor request. Image-based local tutoring is available in the section above. Review and edit your own draft below.</p>
+<textarea id="assignmentText" placeholder="Paste the assignment instructions or questions here..."></textarea>
+<h2 style="margin-top:18px">Your writing examples</h2>
+<p>Optional: share a sample to guide vocabulary, sentence length, and detail level. Answers must stay accurate and should not be disguised as work written without AI help.</p>
+<textarea id="styleSample" placeholder="Paste a short sample of your own writing here..."></textarea>
+<div class="field"><button id="organize">Create AI request</button><button class="secondary" id="clear">Clear</button></div>
+<div id="assignmentOutput" class="output" aria-live="polite">Your AI request will appear here. Creating it does not send anything online.</div>
+<button class="ghost" id="copyBrief" style="margin-top:12px;width:100%">Copy AI request</button>
+</div>
+<div class="panel">
+<h2>School tools</h2>
+<div class="tools">
+<div class="tool"><div class="icon">📚</div><b>Classroom</b><span>Assignments and directions</span></div>
+<div class="tool"><div class="icon">📄</div><b>Docs</b><span>Writing and editing</span></div>
+<div class="tool"><div class="icon">🖥️</div><b>Slides</b><span>Presentation planning</span></div>
+<div class="tool"><div class="icon">🎯</div><b>Blooket</b><span>Practice and review</span></div>
+</div>
+<h2 style="margin-top:24px">Study helper</h2>
+<p>These tools create prompts you can use with a tutor. No account is connected and no schoolwork is changed or submitted.</p>
+<div class="field" style="flex-wrap:wrap">
+<button class="secondary helper" data-mode="Explain this in simple steps">Explain it</button>
+<button class="secondary helper" data-mode="Help me make a study guide from this">Study guide</button>
+<button class="secondary helper" data-mode="Check my work and explain any mistakes">Check my work</button>
+</div>
+<div id="helperOutput" class="output">Choose a helper to create a prompt.</div>
+<button class="ghost" id="copyPrompt" style="margin-top:12px;width:100%">Copy prompt</button>
+</div>
+</section>
+<section class="panel" style="margin-top:24px" aria-labelledby="reviewTitle">
+<h2 id="reviewTitle">Your review draft & version history</h2>
+<p>Write or paste your reviewed work below. Save a version whenever you make a meaningful change. Versions stay in this browser and are not synced to Google Docs.</p>
+<textarea id="reviewDraft" placeholder="Your own reviewed draft goes here..."></textarea>
+<div class="field" style="flex-wrap:wrap">
+<button id="saveVersion">Save version</button>
+<button class="secondary" id="copyReviewed">Copy reviewed draft</button>
+<button class="ghost" id="downloadReviewed">Download text</button>
+</div>
+<div id="saveStatus" class="status" aria-live="polite">No version saved yet.</div>
+<h2 style="margin-top:22px">Saved versions</h2>
+<div id="historyList" class="historyList"><div class="output">Your saved versions will appear here.</div></div>
+<div class="field" style="flex-wrap:wrap;margin-top:18px">
+<button class="ghost" id="clearWorkspace">Clear local workspace</button>
+</div>
+<p class="small">Privacy: this preview stores assignment text, writing samples, and saved drafts in this browser’s local storage. Avoid entering passwords or sensitive personal information. Clearing browser data may erase these saved items.</p>
+</section>
+</main>
+<footer>StudyDesk AI local-first version · OCR and language generation run on this device when WebGPU is supported. No paid AI API, Google authorization, document editing, or submission is connected. Never enter your Google password here.</footer>
+</div>
+<script>
+(() => {
+  'use strict';
+  const STORAGE_KEY = 'studydesk.local.workspace.v1';
+  const $ = (id) => document.getElementById(id);
+  const fields = ['assignmentLink', 'assignmentText', 'styleSample', 'reviewDraft', 'tutorQuestion', 'tutorAnswer'];
+  const state = { history: [], workBrief: '' };
+  let tutorPopup = null;
+  let displayStream = null;
+  let questionImageData = '';
+  let imageTutorRequest = '';
+  let localEngine = null;
+  let localOcrWorker = null;
+  let localModelName = '';
+
+  async function checkLocalSupport() {
+    if (!window.isSecureContext) {
+      $('backendStatus').textContent = 'This page needs HTTPS for local AI and screen sharing. Open the published StudyDesk HTTPS address.';
+      return false;
+    }
+    if (!navigator.gpu) {
+      $('backendStatus').textContent = 'This Chromebook browser does not expose WebGPU. Local AI cannot load here; StudyDesk will not switch to a paid service.';
+      return false;
+    }
+    try {
+      const adapter = await navigator.gpu.requestAdapter();
+      if (!adapter) throw new Error('No compatible GPU adapter was found.');
+      $('backendStatus').textContent = 'WebGPU is available. You can load the free local model.';
+      return true;
+    } catch (error) {
+      $('backendStatus').textContent = `WebGPU check failed: ${error.message || 'GPU unavailable.'}`;
+      return false;
+    }
+  }
+
+  async function loadLocalAI() {
+    if (localEngine) {
+      $('backendStatus').textContent = `Local AI is ready (${localModelName}).`;
+      return true;
+    }
+    if (!await checkLocalSupport()) return false;
+    $('loadLocalAI').disabled = true;
+    $('modelProgress').value = 0;
+    $('backendStatus').textContent = 'Loading WebLLM. The first model download may be close to 1 GB; it is not an API charge.';
+    try {
+      const webllm = await import('https://esm.run/@mlc-ai/web-llm');
+      const candidates = [
+        'SmolLM2-1.7B-Instruct-q4f16_1-MLC',
+        'SmolLM2-360M-Instruct-q4f32_1-MLC'
+      ];
+      let lastError = null;
+      for (const modelId of candidates) {
+        try {
+          localEngine = await webllm.CreateMLCEngine(modelId, {
+            initProgressCallback: report => {
+              if (typeof report.progress === 'number') $('modelProgress').value = Math.round(report.progress * 100);
+              $('backendStatus').textContent = report.text || `Loading ${modelId}...`;
+            }
+          });
+          localModelName = modelId;
+          break;
+        } catch (error) {
+          lastError = error;
+          localEngine = null;
+        }
+      }
+      if (!localEngine) throw lastError || new Error('No local model could be loaded.');
+      $('modelProgress').value = 100;
+      $('backendStatus').textContent = `Local AI ready: ${localModelName}. Your questions stay on this Chromebook.`;
+      return true;
+    } catch (error) {
+      $('backendStatus').textContent = `Local model could not load: ${error.message || 'Check WebGPU, available memory, and internet access for the first download.'}`;
+      return false;
+    } finally {
+      $('loadLocalAI').disabled = false;
+    }
+  }
+
+  async function ensureLocalOcr() {
+    if (localOcrWorker) return localOcrWorker;
+    if (!window.Tesseract) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@7/dist/tesseract.min.js';
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Could not download the free OCR library.'));
+        document.head.append(script);
+      });
+    }
+    localOcrWorker = await window.Tesseract.createWorker('eng', 1, {
+      logger: message => {
+        if (message.status) $('analysisStatus').textContent = `Local OCR: ${message.status} ${Math.round((message.progress || 0) * 100)}%`;
+      }
+    });
+    return localOcrWorker;
+  }
+
+  async function analyzeQuestionImage() {
+    if (!questionImageData) {
+      $('analysisStatus').textContent = 'Attach a question image or share a tab first.';
+      return;
+    }
+    $('analyzeImage').disabled = true;
+    $('analysisStatus').textContent = 'Preparing the local AI model...';
+    try {
+      if (!localEngine && !await loadLocalAI()) throw new Error('Local AI is not available on this Chromebook.');
+      $('analysisStatus').textContent = 'Reading text from the image on this Chromebook...';
+      const ocr = await ensureLocalOcr();
+      const recognized = await ocr.recognize(questionImageData);
+      const extracted = String(recognized.data.text || '').trim();
+      if (!extracted) throw new Error('No readable text was found. Try a clearer screenshot or type the question below.');
+      $('ocrText').value = extracted;
+      $('analysisStatus').textContent = 'Text recognized locally. Asking the on-device model to explain it...';
+      const question = $('ocrText').value.trim();
+      const notes = $('questionNotes').value.trim();
+      const completion = await localEngine.chat.completions.create({
+        messages: [
+          {
+            role: 'system',
+            content: 'You are StudyDesk, a patient educational tutor for teenagers. Explain concepts in simple clear steps, help the learner understand and check their own attempt, and point out uncertainty. The input is OCR text and may contain recognition errors; do not guess missing symbols. If it appears to be an active test or quiz, do not provide the answer; teach the relevant concept or a similar example instead. Never claim you saw visual details that OCR did not capture.'
+          },
+          {
+            role: 'user',
+            content: `Explain this practice question and show the reasoning. OCR text (may contain mistakes):\n${question}\n\nMy notes or attempt:\n${notes || 'Not supplied.'}\n\nIf the OCR text is ambiguous, say what needs correcting before solving.`
+          }
+        ],
+        temperature: 0.25,
+        max_tokens: 650
+      });
+      const answer = completion.choices?.[0]?.message?.content?.trim();
+      if (!answer) throw new Error('The local model returned an empty response.');
+      $('tutorQuestion').value = question;
+      $('tutorAnswer').value = answer;
+      $('imageTutorPrompt').textContent = `Recognized locally:\n${question}\n\nLocal model: ${localModelName}`;
+      persist();
+      updateTutorTab();
+      $('analysisStatus').textContent = `Explanation ready from ${localModelName}. Check the recognized text and reasoning for mistakes.`;
+    } catch (error) {
+      $('analysisStatus').textContent = error.message || 'Local analysis failed.';
+    } finally {
+      $('analyzeImage').disabled = false;
+    }
+  }
+
+  function prepareImageTutorPrompt() {
+    const notes = $('questionNotes').value.trim();
+    if (!questionImageData) {
+      $('questionImageStatus').textContent = 'Choose a question image first.';
+      return '';
+    }
+    imageTutorRequest = [
+      'Please help me understand the question shown in the attached image.',
+      'Explain the relevant concept and guide me through the reasoning step by step.',
+      'If my notes include an attempt, check it and explain any errors without assuming it is correct.',
+      'If any part of the image is hard to read, ask me to clarify instead of guessing.',
+      'My notes or attempt:',
+      notes || 'I have not added an attempt yet.',
+      'Please teach me how to approach this type of question.'
+    ].join('\n\n');
+    $('imageTutorPrompt').textContent = imageTutorRequest;
+    $('questionImageStatus').textContent = 'Image ready locally. Open the separate answer tab to view it, or copy the prompt for a tutor.';
+    return imageTutorRequest;
+  }
+
+  function loadQuestionImage(file) {
+    if (!file) return;
+    $('ocrText').value = '';
+    const allowed = ['image/png', 'image/jpeg', 'image/webp'];
+    if (!allowed.includes(file.type)) {
+      $('questionImageStatus').textContent = 'Choose a PNG, JPG, or WebP image.';
+      $('questionImageFile').value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      $('questionImageStatus').textContent = 'That image is over 5 MB. Choose a smaller screenshot.';
+      $('questionImageFile').value = '';
+      return;
+    }
+    $('questionImageStatus').textContent = 'Preparing screenshot locally...';
+    (async () => {
+      let bitmap;
+      try {
+        bitmap = await createImageBitmap(file);
+        const maxDimension = 2200;
+        const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+        const width = Math.max(1, Math.round(bitmap.width * scale));
+        const height = Math.max(1, Math.round(bitmap.height * scale));
+        const needsResize = width !== bitmap.width || height !== bitmap.height;
+        const shouldReencode = file.size > 3.5 * 1024 * 1024 || needsResize;
+
+        if (!shouldReencode) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (typeof reader.result !== 'string') {
+              $('questionImageStatus').textContent = 'Could not load that image.';
+              return;
+            }
+            questionImageData = reader.result;
+            $('questionImagePreview').src = questionImageData;
+            $('questionImagePreview').hidden = false;
+            $('questionImageStatus').textContent = `${file.name} attached locally (${Math.round(file.size / 1024)} KB). It has not left this Chromebook.`;
+            if (tutorPopup && !tutorPopup.closed) updateTutorTab();
+          };
+          reader.onerror = () => { $('questionImageStatus').textContent = 'Could not read that image file.'; };
+          reader.readAsDataURL(file);
+          return;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d', { alpha: false });
+        if (!context) throw new Error('Image processing is unavailable.');
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, width, height);
+        context.drawImage(bitmap, 0, 0, width, height);
+
+        let blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        if (!blob) throw new Error('Could not resize that image.');
+        if (blob.size > 3.5 * 1024 * 1024) {
+          blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+        }
+        if (!blob || blob.size > 3.5 * 1024 * 1024) {
+          throw new Error('The resized image is still too large. Crop it to the question and try again.');
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result !== 'string') {
+            $('questionImageStatus').textContent = 'Could not finish preparing that image.';
+            return;
+          }
+          questionImageData = reader.result;
+          $('questionImagePreview').src = questionImageData;
+          $('questionImagePreview').hidden = false;
+          $('questionImageStatus').textContent = `Image prepared locally (${Math.round(blob.size / 1024)} KB, ${width} × ${height}). It has not left this Chromebook.`;
+          if (tutorPopup && !tutorPopup.closed) updateTutorTab();
+        };
+        reader.onerror = () => { $('questionImageStatus').textContent = 'Could not finish preparing that image.'; };
+        reader.readAsDataURL(blob);
+      } catch (error) {
+        $('questionImageStatus').textContent = error.message || 'Could not prepare that image.';
+      } finally {
+        if (bitmap) bitmap.close();
+      }
+    })();
+  }
+
+  function removeQuestionImage() {
+    questionImageData = '';
+    $('questionImageFile').value = '';
+    $('ocrText').value = '';
+    $('questionImagePreview').removeAttribute('src');
+    $('questionImagePreview').hidden = true;
+    $('questionImageStatus').textContent = 'Question image removed.';
+    if (tutorPopup && !tutorPopup.closed) updateTutorTab();
+  }
+
+  function stopScreenShare(updateMessage = true) {
+    if (displayStream) {
+      displayStream.getTracks().forEach(track => track.stop());
+      displayStream = null;
+    }
+    $('screenCaptureVideo').srcObject = null;
+    $('startShare').disabled = false;
+    $('saveFrame').disabled = true;
+    $('analyzeSharedFrame').disabled = true;
+    $('stopShare').disabled = true;
+    if (updateMessage) $('captureStatus').textContent = 'Sharing stopped. Nothing is being captured.';
+  }
+
+  async function startScreenShare() {
+    if (!navigator.mediaDevices || typeof navigator.mediaDevices.getDisplayMedia !== 'function') {
+      $('captureStatus').textContent = 'Screen sharing is unavailable in this browser or preview. Open this page in a supported Chrome tab over HTTPS.';
+      return;
+    }
+    try {
+      stopScreenShare(false);
+      $('captureStatus').textContent = 'Choose the schoolwork tab in Chrome’s sharing prompt.';
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+      displayStream = stream;
+      $('screenCaptureVideo').srcObject = stream;
+      await $('screenCaptureVideo').play();
+      $('startShare').disabled = true;
+      $('saveFrame').disabled = false;
+      $('analyzeSharedFrame').disabled = false;
+      $('stopShare').disabled = false;
+      $('captureStatus').textContent = 'Sharing is active. Chrome’s sharing indicator should remain visible.';
+      const [track] = stream.getVideoTracks();
+      track.addEventListener('ended', () => stopScreenShare(), { once: true });
+    } catch (error) {
+      stopScreenShare(false);
+      $('captureStatus').textContent = error.name === 'NotAllowedError'
+        ? 'Sharing was cancelled or permission was denied.'
+        : 'Could not start sharing. Check Chrome permissions and try again.';
+    }
+  }
+
+  function saveScreenFrame() {
+    const video = $('screenCaptureVideo');
+    const canvas = $('screenCaptureCanvas');
+    if (!displayStream || !video.videoWidth || !video.videoHeight) {
+      $('captureStatus').textContent = 'Start sharing and wait for the tab preview before saving an image.';
+      return;
+    }
+    const scale = Math.min(1, 1600 / Math.max(video.videoWidth, video.videoHeight));
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(blob => {
+      if (!blob) {
+        $('captureStatus').textContent = 'Could not create the image. Try again.';
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `StudyDesk-question-${new Date().toISOString().replace(/[:.]/g, '-')}.jpg`;
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        if (typeof reader.result === 'string') {
+          questionImageData = reader.result;
+          $('questionImagePreview').src = questionImageData;
+          $('questionImagePreview').hidden = false;
+          $('questionImageStatus').textContent = 'Captured frame attached locally. Click Analyze question to run OCR and AI on this Chromebook.';
+          if (tutorPopup && !tutorPopup.closed) updateTutorTab();
+        }
+      });
+      reader.readAsDataURL(blob);
+      $('captureStatus').textContent = 'Question image downloaded and attached locally. It has not been uploaded.';
+    }, 'image/jpeg', 0.82);
+  }
+
+  async function analyzeCurrentSharedFrame() {
+    if (!displayStream || !$('screenCaptureVideo').videoWidth) {
+      $('captureStatus').textContent = 'Share your schoolwork tab first.';
+      return;
+    }
+    $('analyzeSharedFrame').disabled = true;
+    $('captureStatus').textContent = 'Preparing the current shared frame...';
+    try {
+      const video = $('screenCaptureVideo');
+      const canvas = $('screenCaptureCanvas');
+      const scale = Math.min(1, 1600 / Math.max(video.videoWidth, video.videoHeight));
+      canvas.width = Math.round(video.videoWidth * scale);
+      canvas.height = Math.round(video.videoHeight * scale);
+      const context = canvas.getContext('2d', { alpha: false });
+      if (!context) throw new Error('Image processing is unavailable.');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.84));
+      if (!blob || blob.size > 3.5 * 1024 * 1024) {
+        throw new Error('The frame could not be compressed enough. Try sharing only the question area if available.');
+      }
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('Could not read the captured frame.'));
+        reader.onerror = () => reject(new Error('Could not read the captured frame.'));
+        reader.readAsDataURL(blob);
+      });
+      questionImageData = dataUrl;
+      $('questionImagePreview').src = dataUrl;
+      $('questionImagePreview').hidden = false;
+      $('questionImageStatus').textContent = `Current shared frame captured (${Math.round(blob.size / 1024)} KB).`;
+      $('captureStatus').textContent = 'Frame captured locally. Running OCR and AI on this Chromebook.';
+      await analyzeQuestionImage();
+    } catch (error) {
+      $('captureStatus').textContent = error.message || 'Could not capture the current frame.';
+    } finally {
+      $('analyzeSharedFrame').disabled = !displayStream;
+    }
+  }
+
+  function tutorPayload() {
+    return {
+      question: $('tutorQuestion').value.trim(),
+      answer: $('tutorAnswer').value.trim(),
+      image: questionImageData,
+      notes: $('questionNotes').value.trim()
+    };
+  }
+
+  function updateTutorTab() {
+    if (!tutorPopup || tutorPopup.closed) {
+      $('tutorTabStatus').textContent = 'Open the separate answer tab first.';
+      return;
+    }
+    if (typeof tutorPopup.renderStudyDesk !== 'function') {
+      $('tutorTabStatus').textContent = 'The answer tab was refreshed. Reopen it from StudyDesk.';
+      return;
+    }
+    tutorPopup.renderStudyDesk(tutorPayload());
+    $('tutorTabStatus').textContent = 'Separate answer tab updated.';
+  }
+
+  function openTutorTab() {
+    if (tutorPopup && !tutorPopup.closed) {
+      tutorPopup.focus();
+      updateTutorTab();
+      return;
+    }
+    tutorPopup = window.open('about:blank', '_blank');
+    if (!tutorPopup) {
+      $('tutorTabStatus').textContent = 'Chrome blocked the new tab. Allow this site to open a tab, then try again.';
+      return;
+    }
+    const doc = tutorPopup.document;
+    doc.open();
+    doc.write('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>StudyDesk · Answer View</title><style>*{box-sizing:border-box}body{margin:0;padding:clamp(20px,5vw,64px);font-family:system-ui,sans-serif;background:#f5f7fc;color:#172033}.wrap{max-width:1100px;margin:auto}.label{font-size:12px;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;color:#3457d5;margin:0 0 12px}.question{font-size:clamp(18px,2vw,25px);line-height:1.5;padding:18px;background:#fff;border:1px solid #dfe6f2;border-radius:16px;white-space:pre-wrap;overflow-wrap:anywhere}.answer{margin-top:24px;min-height:32vh;padding:clamp(22px,4vw,42px);background:#fff;border:1px solid #dfe6f2;border-radius:20px;font-size:clamp(30px,5vw,58px);font-weight:800;line-height:1.3;white-space:pre-wrap;overflow-wrap:anywhere;box-shadow:0 12px 32px #17203312}.muted{font-size:13px;color:#66738b;margin-top:18px}.questionImage{display:block;max-width:100%;max-height:55vh;object-fit:contain;margin:18px 0;border-radius:14px;border:1px solid #dfe6f2}.notes{font-size:15px;line-height:1.5;white-space:pre-wrap}</style></head><body><main class="wrap"><p class="label">StudyDesk · Question</p><div id="question" class="question">Waiting for a question...</div><img id="questionImage" class="questionImage" alt="Attached question screenshot" hidden><div id="notes" class="notes"></div><p class="label" style="margin-top:28px">Answer and explanation</p><div id="answer" class="answer">Paste an explanation into the main StudyDesk tab.</div><p class="muted">Display only · This tab does not read your other tabs.</p></main></body></html>');
+    doc.close();
+    tutorPopup.renderStudyDesk = function(data) {
+      tutorPopup.document.getElementById('question').textContent = data.question || 'No question entered yet.';
+      tutorPopup.document.getElementById('answer').textContent = data.answer || 'No answer entered yet.';
+      const image = tutorPopup.document.getElementById('questionImage');
+      image.src = data.image || '';
+      image.hidden = !data.image;
+      tutorPopup.document.getElementById('notes').textContent = data.notes ? `Your notes or attempt: ${data.notes}` : '';
+    };
+    updateTutorTab();
+    $('tutorTabStatus').textContent = 'Separate answer tab opened. Edit either field here, then choose Update answer tab.';
+  }
+
+  function readSaved() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      for (const id of fields) if (typeof saved[id] === 'string') $(id).value = saved[id];
+      state.history = Array.isArray(saved.history) ? saved.history.slice(0, 30) : [];
+      if (saved.assignmentLink) {
+        try {
+          const savedUrl = new URL(saved.assignmentLink);
+          if (['http:', 'https:'].includes(savedUrl.protocol)) showAssignmentLink(savedUrl.href, false);
+        } catch { /* Ignore an invalid saved URL. */ }
+      }
+      $('saveStatus').textContent = state.history.length
+        ? `${state.history.length} saved version${state.history.length === 1 ? '' : 's'} loaded from this browser.`
+        : 'Workspace restored. No version saved yet.';
+      renderHistory();
+    } catch {
+      $('saveStatus').textContent = 'Saved workspace could not be read. You can continue with a fresh workspace.';
+    }
+  }
+
+  function persist() {
+    const data = { history: state.history.slice(0, 30) };
+    for (const id of fields) data[id] = $(id).value;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      $('saveStatus').textContent = 'Saved in this browser.';
+    } catch {
+      $('saveStatus').textContent = 'Browser storage is full or unavailable. Copy important work somewhere safe.';
+    }
+  }
+
+  function showAssignmentLink(value, announce = true) {
+    const status = $('linkStatus');
+    status.replaceChildren();
+    const label = document.createElement('span');
+    label.textContent = 'Saved link: ';
+    const anchor = document.createElement('a');
+    anchor.href = value;
+    anchor.target = '_blank';
+    anchor.rel = 'noopener noreferrer';
+    anchor.textContent = 'Open assignment in a new tab';
+    status.append(label, anchor);
+    if (announce) status.setAttribute('aria-label', 'Assignment link saved locally');
+  }
+
+  function buildRequest(mode = 'Prepare suggested answers and explain the reasoning') {
+    const raw = $('assignmentText').value.trim();
+    if (!raw) return 'Paste your assignment directions or questions first.';
+    const style = $('styleSample').value.trim();
+    return [
+      'STUDYDESK AI — TUTOR REQUEST',
+      '',
+      'ASSIGNMENT DIRECTIONS / QUESTIONS',
+      raw,
+      '',
+      'WRITING SAMPLE (OPTIONAL)',
+      style || 'No sample supplied. Use clear, student-friendly language.',
+      '',
+      'REQUEST',
+      mode,
+      '',
+      'HOW TO HELP',
+      '1. Work from the supplied assignment text. Do not invent missing instructions or sources.',
+      '2. Explain important reasoning in clear steps so the student can check and understand it.',
+      '3. Check factual claims and calculations; flag anything uncertain.',
+      '4. Keep a clear distinction between source-supported facts and assumptions.',
+      '5. Do not access private accounts, change documents, or submit work.',
+      '6. Return a review copy that the student can edit before using.'
+    ].join('\n');
+  }
+
+  async function copyText(value, button, successText) {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      const old = button.textContent;
+      button.textContent = successText || 'Copied!';
+      setTimeout(() => { button.textContent = old; }, 1600);
+    } catch {
+      const old = button.textContent;
+      button.textContent = 'Select the text and press Ctrl+C';
+      setTimeout(() => { button.textContent = old; }, 2200);
+    }
+  }
+
+  function renderHistory() {
+    const list = $('historyList');
+    list.replaceChildren();
+    if (!state.history.length) {
+      const empty = document.createElement('div');
+      empty.className = 'output';
+      empty.textContent = 'No saved versions yet. Add a draft above and choose Save version.';
+      list.append(empty);
+      return;
+    }
+    state.history.forEach((item, index) => {
+      const row = document.createElement('div');
+      row.className = 'historyItem';
+      const info = document.createElement('div');
+      const title = document.createElement('strong');
+      title.textContent = `Version ${state.history.length - index}`;
+      const meta = document.createElement('span');
+      meta.textContent = new Date(item.createdAt).toLocaleString();
+      info.append(title, meta);
+      const actions = document.createElement('div');
+      actions.className = 'historyActions';
+      const restore = document.createElement('button');
+      restore.className = 'secondary';
+      restore.textContent = 'Restore';
+      restore.addEventListener('click', () => {
+        $('reviewDraft').value = item.text;
+        persist();
+        $('saveStatus').textContent = `Version ${state.history.length - index} restored. Save again to create a new version.`;
+        $('reviewDraft').focus();
+      });
+      const copy = document.createElement('button');
+      copy.className = 'ghost';
+      copy.textContent = 'Copy';
+      copy.addEventListener('click', () => copyText(item.text, copy, 'Copied!'));
+      actions.append(restore, copy);
+      row.append(info, actions);
+      list.append(row);
+    });
+  }
+
+  $('openLink').addEventListener('click', () => {
+    const value = $('assignmentLink').value.trim();
+    if (!value) { $('linkStatus').textContent = 'Paste an assignment link first.'; return; }
+    try {
+      const parsed = new URL(value);
+      if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Invalid protocol');
+      $('assignmentLink').value = parsed.href;
+      showAssignmentLink(parsed.href);
+      persist();
+    } catch {
+      $('linkStatus').textContent = 'Enter a valid link beginning with https:// or http://.';
+    }
+  });
+
+  $('startShare').addEventListener('click', startScreenShare);
+  $('saveFrame').addEventListener('click', saveScreenFrame);
+  $('analyzeSharedFrame').addEventListener('click', analyzeCurrentSharedFrame);
+  $('stopShare').addEventListener('click', () => stopScreenShare());
+  $('questionImageFile').addEventListener('change', event => loadQuestionImage(event.target.files?.[0]));
+  $('prepareImagePrompt').addEventListener('click', prepareImageTutorPrompt);
+  $('copyImagePrompt').addEventListener('click', () => {
+    const prompt = imageTutorRequest || prepareImageTutorPrompt();
+    if (prompt) copyText(prompt, $('copyImagePrompt'), 'Copied prompt!');
+  });
+  $('removeQuestionImage').addEventListener('click', removeQuestionImage);
+  $('loadLocalAI').addEventListener('click', loadLocalAI);
+  $('checkLocalAI').addEventListener('click', checkLocalSupport);
+  $('analyzeImage').addEventListener('click', analyzeQuestionImage);
+  $('openTutorTab').addEventListener('click', openTutorTab);
+  $('updateTutorTab').addEventListener('click', updateTutorTab);
+  $('tutorQuestion').addEventListener('input', persist);
+  $('tutorAnswer').addEventListener('input', persist);
+  $('organize').addEventListener('click', () => {
+    state.workBrief = buildRequest();
+    $('assignmentOutput').textContent = state.workBrief;
+    persist();
+  });
+  $('copyBrief').addEventListener('click', () => {
+    if (!state.workBrief) state.workBrief = buildRequest();
+    $('assignmentOutput').textContent = state.workBrief;
+    copyText(state.workBrief, $('copyBrief'), 'Copied request!');
+  });
+  $('clear').addEventListener('click', () => {
+    $('assignmentText').value = '';
+    $('styleSample').value = '';
+    state.workBrief = '';
+    $('assignmentOutput').textContent = 'Your AI request will appear here. Creating it does not send anything online.';
+    persist();
+  });
+
+  document.querySelectorAll('.helper').forEach((button) => {
+    button.addEventListener('click', () => {
+      const text = $('assignmentText').value.trim();
+      if (!text) {
+        $('helperOutput').textContent = 'Paste your assignment directions or questions first.';
+        return;
+      }
+      $('helperOutput').textContent = buildRequest(button.dataset.mode);
+      state.workBrief = $('helperOutput').textContent;
+      persist();
+    });
+  });
+  $('copyPrompt').addEventListener('click', () => copyText($('helperOutput').textContent, $('copyPrompt'), 'Copied!'));
+
+  $('saveVersion').addEventListener('click', () => {
+    const text = $('reviewDraft').value.trim();
+    if (!text) {
+      $('saveStatus').textContent = 'Write or paste a reviewed draft before saving a version.';
+      return;
+    }
+    state.history.unshift({ createdAt: new Date().toISOString(), text });
+    state.history = state.history.slice(0, 30);
+    persist();
+    renderHistory();
+    $('saveStatus').textContent = `Version saved. ${state.history.length} version${state.history.length === 1 ? '' : 's'} stored in this browser.`;
+  });
+  $('copyReviewed').addEventListener('click', () => copyText($('reviewDraft').value, $('copyReviewed'), 'Copied draft!'));
+  $('downloadReviewed').addEventListener('click', () => {
+    const text = $('reviewDraft').value;
+    if (!text.trim()) { $('saveStatus').textContent = 'Add some draft text before downloading.'; return; }
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'StudyDesk-reviewed-draft.txt';
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  });
+  $('clearWorkspace').addEventListener('click', () => {
+    const ok = confirm('Clear all StudyDesk text and saved versions from this browser? This cannot be undone.');
+    if (!ok) return;
+    localStorage.removeItem(STORAGE_KEY);
+    for (const id of fields) $(id).value = '';
+    state.history = [];
+    state.workBrief = '';
+    $('linkStatus').textContent = 'No assignment link added yet.';
+    $('assignmentOutput').textContent = 'Your AI request will appear here. Creating it does not send anything online.';
+    $('helperOutput').textContent = 'Choose a helper to create a prompt.';
+    $('saveStatus').textContent = 'Local workspace cleared.';
+    renderHistory();
+  });
+
+  for (const id of fields) $(id).addEventListener('input', persist);
+  window.addEventListener('pagehide', () => stopScreenShare(false));
+  readSaved();
+  renderHistory();
+})();
+</script>
+</body>
+</html>
