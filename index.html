@@ -123,6 +123,34 @@ main > section[aria-labelledby="separateTutorTitle"] .field,
 #tutorAnswer { display:block !important; width:100%; min-height:220px; font-size:18px; line-height:1.5; font-weight:500; resize:vertical; }
 @media(max-width:600px){ main {padding:10px;} .panel {padding:16px;} }
 
+
+/* Minimal StudyDesk: share, preview, analyze, answer only. */
+.topbar { justify-content:flex-start !important; }
+.topbar .pill { display:none !important; }
+main > section:not([aria-labelledby="shareTabTitle"]):not([aria-labelledby="separateTutorTitle"]) { display:none !important; }
+main { max-width:980px !important; padding:16px !important; }
+main > section[aria-labelledby="shareTabTitle"] { display:block !important; margin:0 auto 14px !important; }
+#shareTabTitle, #shareTabTitle + p { display:none !important; }
+#saveFrame, #stopShare, #loadLocalAI, #checkLocalAI, #modelProgress,
+#backendStatus, #questionImageFile, #questionImagePreview, #questionNotes,
+#questionImageStatus, #ocrText, #imageTutorPrompt, #prepareImagePrompt,
+#copyImagePrompt, #removeQuestionImage, #analyzeImage, #openTutorTab,
+#updateTutorTab, #tutorTabStatus, #tutorQuestion, #separateTutorTitle,
+#tutorQuestion + label, #captureStatus + p { display:none !important; }
+.captureActions { display:flex; gap:10px; margin:0 0 10px; }
+#startShare, #analyzeSharedFrame { display:inline-flex !important; min-height:48px; align-items:center; justify-content:center; }
+#analyzeSharedFrame { flex:1; }
+.captureFrame { display:block !important; width:100%; max-height:46vh; min-height:240px; object-fit:contain; background:#101827; border-radius:12px; }
+#captureStatus { display:block !important; margin:8px 0 0; min-height:22px; }
+main > section[aria-labelledby="separateTutorTitle"] { display:block !important; margin:0 auto !important; max-width:980px; }
+#separateTutorTitle, #separateTutorTitle + p, .tutorGrid > div:first-child,
+main > section[aria-labelledby="separateTutorTitle"] .field,
+#tutorTabStatus, main > section[aria-labelledby="separateTutorTitle"] .small { display:none !important; }
+.tutorGrid { display:block !important; }
+.tutorGrid > div:last-child { display:block !important; }
+#tutorAnswer { display:block !important; width:100%; min-height:230px; font-size:19px; line-height:1.5; font-weight:500; resize:vertical; }
+@media(max-width:600px){ main {padding:10px !important;} .panel {padding:14px;} .captureActions {flex-wrap:wrap;} #startShare {flex:1;} }
+
 </style>
 </head>
 <body>
@@ -161,7 +189,7 @@ main > section[aria-labelledby="separateTutorTitle"] .field,
 <h2 id="shareTabTitle">Step 1 · Share your schoolwork tab</h2>
 <p>Click Share a tab and choose your schoolwork tab in Chrome's sharing prompt. Once it is sharing, you can analyze the current frame directly—no screenshot download or re-upload is needed. Chrome's sharing indicator stays visible.</p>
 <div class="captureActions">
-<button id="startShare">Share a tab</button>
+<button id="startShare">Share screen</button>
 <button class="secondary" id="saveFrame" disabled>Save question image</button>
 <button id="analyzeSharedFrame" disabled>Analyze</button>
 <button class="ghost" id="stopShare" disabled>Stop sharing</button>
@@ -288,7 +316,7 @@ main > section[aria-labelledby="separateTutorTitle"] .field,
 
   async function checkLocalSupport() {
     if (!window.isSecureContext) {
-      $('backendStatus').textContent = 'This page needs HTTPS for local AI and screen sharing. Open the published StudyDesk HTTPS address.';
+      $('captureStatus').textContent = 'This page needs HTTPS for local AI and screen sharing. Open the published StudyDesk HTTPS address.';
       return false;
     }
     if (!navigator.gpu) {
@@ -361,9 +389,10 @@ main > section[aria-labelledby="separateTutorTitle"] .field,
     }
     localOcrWorker = await window.Tesseract.createWorker('eng', 1, {
       logger: message => {
-        if (message.status) $('analysisStatus').textContent = `Local OCR: ${message.status} ${Math.round((message.progress || 0) * 100)}%`;
+        if (message.status) $('captureStatus').textContent = `Preparing text reader: ${message.status} ${Math.round((message.progress || 0) * 100)}%`;
       }
     });
+    if (displayStream && localEngine) $('analyzeSharedFrame').disabled = false;
     return localOcrWorker;
   }
 
@@ -397,7 +426,7 @@ main > section[aria-labelledby="separateTutorTitle"] .field,
           }
         ],
         temperature: 0.25,
-        max_tokens: 220
+        max_tokens: 160
       });
       const answer = completion.choices?.[0]?.message?.content?.trim();
       if (!answer) throw new Error('The local model returned an empty response.');
@@ -554,8 +583,9 @@ main > section[aria-labelledby="separateTutorTitle"] .field,
       await $('screenCaptureVideo').play();
       $('startShare').disabled = true;
       $('saveFrame').disabled = false;
-      $('analyzeSharedFrame').disabled = false;
+      $('analyzeSharedFrame').disabled = !localEngine || !localOcrWorker;
       $('stopShare').disabled = false;
+      if (!localEngine || !localOcrWorker) $('captureStatus').textContent = 'Screen shared. Preparing the local AI and text reader...';
       $('captureStatus').textContent = 'Sharing is active. Chrome’s sharing indicator should remain visible.';
       const [track] = stream.getVideoTracks();
       track.addEventListener('ended', () => stopScreenShare(), { once: true });
@@ -642,7 +672,7 @@ main > section[aria-labelledby="separateTutorTitle"] .field,
     } catch (error) {
       $('captureStatus').textContent = error.message || 'Could not capture the current frame.';
     } finally {
-      $('analyzeSharedFrame').disabled = !displayStream;
+      $('analyzeSharedFrame').disabled = !displayStream || !localEngine || !localOcrWorker;
     }
   }
 
@@ -930,15 +960,17 @@ main > section[aria-labelledby="separateTutorTitle"] .field,
   window.addEventListener('pagehide', () => stopScreenShare(false));
   readSaved();
   renderHistory();
-  // Warm the smaller local model and OCR worker in the background after the page opens.
+  // Warm the local model and OCR in parallel so Analyze does not trigger first-time setup.
   window.addEventListener('load', () => {
-    setTimeout(() => {
-      loadLocalAI().then(ready => {
-        if (ready) ensureLocalOcr().catch(error => {
-          $('captureStatus').textContent = 'AI ready; OCR setup failed: ' + (error.message || 'try reloading');
-        });
-      });
-    }, 300);
+    $('captureStatus').textContent = 'Getting the local AI ready. You can share your screen while it prepares...';
+    Promise.all([loadLocalAI(), ensureLocalOcr()]).then(([ready]) => {
+      if (ready) {
+        $('captureStatus').textContent = 'Ready. Share your practice page, then press Analyze.';
+        if (displayStream) $('analyzeSharedFrame').disabled = false;
+      }
+    }).catch(error => {
+      $('captureStatus').textContent = 'Setup issue: ' + (error.message || 'reload this page and try again');
+    });
   }, { once: true });
 })();
 </script>
